@@ -51,9 +51,9 @@
 - 네트워크는 `docker network create` 등으로 미리 만들어두고, 각 `docker-compose.yml`에서는 `external: true`로 참조만 한다 (compose 파일이 네트워크를 새로 만들지 않게).
 - 기본으로 두는 네트워크 예시:
   - `proxy` — 리버스 프록시(Nginx/Traefik) + 외부에 노출될 웹/API 컨테이너만 연결. 인터넷에서 들어오는 요청이 닿는 유일한 통로.
-  - `blog-backend` — blog-api, postgres, redis 등 블로그 앱과 그 앱이 쓰는 DB/캐시만 연결. 게임 서버 등 관계없는 컨테이너는 여기 연결하지 않는다.
-  - (향후) `gameserver-backend` — 게임 서버 전용. postgres를 블로그와 공유해야 한다면, postgres 컨테이너만 `blog-backend`와 `gameserver-backend` 양쪽에 추가로 연결한다.
-- 하나의 컨테이너가 여러 네트워크에 동시에 속하는 것은 정상이다 (예: blog-api는 `proxy`와 `blog-backend` 둘 다에 연결).
+  - `backend` — postgres, redis 등 여러 서비스가 공유하는 DB/캐시와, 그걸 쓰는 앱 컨테이너(blog-api 등)만 연결. 서비스 이름을 붙이지 않은 건 게임 서버 등 향후 서비스도 같은 postgres/redis를 공유할 수 있게 하기 위함.
+  - (필요 시) 특정 서비스만 쓰는 전용 DB가 생기면 그때 `<서비스명>-backend`처럼 범위를 좁힌 네트워크를 추가로 만든다.
+- 하나의 컨테이너가 여러 네트워크에 동시에 속하는 것은 정상이다 (예: blog-api는 `proxy`와 `backend` 둘 다에 연결).
 - 절대 모든 컨테이너를 하나의 flat 네트워크에 몰아넣지 않는다 — 관계없는 컨테이너가 postgres/redis에 접근 가능해지는 것을 방지하기 위함.
 
 ## 시크릿 관리
@@ -84,4 +84,4 @@
 |---|---|---|
 | 서브 폴더명 (data/deploy/secret 공통) | 컨테이너 단위, 소문자, 하이픈 구분 | `jenkins`, `postgres`, `blog-web`, `blog-api` |
 | Compose 프로젝트명 | 서브 폴더명과 동일하게 고정 | `name: blog-api` |
-| 공용 네트워크명 | 통신 경계 기준, `<범위>-<용도>` | `proxy`, `blog-backend`, `gameserver-backend` |
+| 공용 네트워크명 | 통신 경계 기준, 특정 서비스에 종속되지 않게 | `proxy`, `backend` |

@@ -1,0 +1,25 @@
+name: uptime-kuma
+
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    restart: unless-stopped
+    volumes:
+      - ../../data/uptime-kuma:/app/data
+    ports:
+      - "127.0.0.1:3001:3001"
+    networks:
+      - proxy
+      - backend
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256m
+
+networks:
+  proxy:
+    external: true
+  backend:
+    external: true

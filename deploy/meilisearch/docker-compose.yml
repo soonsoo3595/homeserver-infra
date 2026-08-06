@@ -1,0 +1,31 @@
+name: meilisearch
+
+services:
+  meilisearch:
+    image: getmeili/meilisearch:v1.10
+    container_name: meilisearch
+    restart: unless-stopped
+    env_file:
+      - ../../secret/meilisearch/.env
+    environment:
+      MEILI_NO_ANALYTICS: "true"
+    ports:
+      - "127.0.0.1:17700:7700"
+    volumes:
+      - ../../data/meilisearch:/meili_data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --spider http://localhost:7700/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1g
+
+networks:
+  backend:
+    external: true

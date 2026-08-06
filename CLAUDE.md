@@ -19,14 +19,15 @@
 - [x] postgres 백업(pg_dumpall + cron, 7일 보관, 로컬 저장) 구성
 - [x] UFW/Fail2ban 기초 보안 설정
 - [x] Jenkins 컨테이너 구성 및 초기 설정
-- [ ] Cloudflare Tunnel 외부 노출 설정
-- [ ] 블로그 레포 생성 및 개발 시작
+- [x] Meilisearch 컨테이너 구성 (블로그 검색용)
+- [x] 블로그 레포 생성 및 개발 시작 — 진행 상황은 [blog/CLAUDE.md](../blog/CLAUDE.md) 참고
+- [ ] Cloudflare Tunnel 외부 노출 설정 — **보류: 도메인 미보유, 구매 후 재개**
 
 ## 개발 환경 메모
 
 - 노트북(우분투 서버)과 별개로 데스크탑에서 작업. 같은 LAN(iptime 공유기, 192.168.0.x)에서 SSH로 노트북에 접속 가능.
 - 노트북 WSL2는 mirrored 네트워킹 모드라 내부 IP가 고정되지 않고 Windows 호스트의 실제 LAN IP를 그대로 사용 (`192.168.0.10`).
-- 데스크탑에서 노트북으로 SSH 접속 시 비밀번호 인증만 되어 있음 (키 인증 설정 안 함, 의도적 결정) — Claude Code 세션은 TTY가 없어 비밀번호 입력이 불가능하므로, 세션에서 직접 노트북에 SSH 접속은 불가능. 노트북(서버) 쪽 작업은 사용자가 직접 진행한다.
+- **(2026-08-06부터) 데스크탑 → 노트북 SSH는 키 인증으로 전환됨.** 데스크탑 `~/.ssh/homeserver`(ed25519, 패스프레이즈 없음)를 노트북 `~/.ssh/authorized_keys`에 등록해뒀고, 데스크탑 `~/.ssh/config`의 `Host homeserver` 항목 덕분에 `ssh homeserver`로 비밀번호 없이 바로 접속된다. Claude Code 세션에서도 TTY 없이 이 키로 직접 SSH 접속이 가능 — 컨테이너 상태 확인, 로그 조회, 1회성 명령 실행 등은 세션에서 직접 처리할 수 있다 (이전엔 비밀번호 인증만 되어 있어 세션에서 SSH 접속이 불가능했고, 사용자가 직접 서버 작업을 했었음 — 개발 속도를 위해 의도적으로 정책을 바꿈). 다만 시크릿 파일 생성·수정처럼 민감한 작업은 여전히 신중하게, 애매하면 먼저 물어볼 것.
 - 관리 화면(postgres, redis, Traefik 대시보드, Uptime Kuma, Jenkins 등)은 전부 `127.0.0.1`에만 바인딩하고, 데스크탑에서는 `ssh -L <포트>:localhost:<포트> <사용자명>@192.168.0.10` SSH 터널로만 접근한다. LAN에 직접 노출하지 않는다.
 - **WSL2 mirrored 네트워킹 모드 + UFW 주의사항**: mirrored 모드에서는 loopback(`127.0.0.1`) 트래픽이 일반적인 `lo` 인터페이스로 안 잡히는 것으로 보여, UFW의 기본 "loopback 허용"(`allow in on lo`) 규칙이 작동하지 않는 경우가 있었다. 이 경우 `sudo ufw allow <포트>/tcp`처럼 포트 자체를 허용해야 한다 — 어차피 Docker가 해당 포트를 `127.0.0.1`에만 바인딩하고 있어 LAN 노출 위험은 없다.
 

@@ -5,6 +5,11 @@ services:
     image: traefik:v3.1
     container_name: traefik
     restart: unless-stopped
+    environment:
+      # 도커 데몬이 새 버전(API 1.55)인데 traefik의 도커 클라이언트가 협상 없이
+      # 오래된 기본 버전(1.24)으로 붙으면서 "client version too old" 오류가 났음.
+      # 데몬이 지원하는 범위(최소 1.40) 안의 값으로 고정해서 우회.
+      - DOCKER_API_VERSION=1.44
     command:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"

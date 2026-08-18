@@ -1,0 +1,21 @@
+name: cloudflared
+
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel run
+    env_file:
+      - ../../secret/cloudflared/.env
+    networks:
+      - proxy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128m
+
+networks:
+  proxy:
+    external: true

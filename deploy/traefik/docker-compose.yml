@@ -2,25 +2,25 @@ name: traefik
 
 services:
   traefik:
-    image: traefik:v3.1
+    image: traefik:v3.5
     container_name: traefik
     restart: unless-stopped
-    environment:
-      # 도커 데몬이 새 버전(API 1.55)인데 traefik의 도커 클라이언트가 협상 없이
-      # 오래된 기본 버전(1.24)으로 붙으면서 "client version too old" 오류가 났음.
-      # 데몬이 지원하는 범위(최소 1.40) 안의 값으로 고정해서 우회.
-      - DOCKER_API_VERSION=1.44
+    # 원래는 --providers.docker(라벨 기반 자동 라우팅)를 썼는데, 최신 Docker
+    # 엔진(API 1.55, 최소 지원 1.40)과 Traefik이 내부적으로 요청하는 옛 API
+    # 버전(1.24)이 맞지 않아 "client version too old"로 컨테이너를 아예 못
+    # 찾는 문제가 있었다(v3.1/v3.5 둘 다 동일). docker.sock 자체가 필요 없는
+    # 파일 기반 정적 라우팅(providers.file)으로 대체 - 새 서비스 추가 시
+    # dynamic/ 아래에 라우터/서비스 정의 파일을 추가하면 된다.
     command:
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=proxy"
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--providers.file.watch=true"
       - "--entrypoints.web.address=:80"
       - "--api.insecure=true"
     ports:
       - "80:80"
       - "127.0.0.1:8080:8080"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./dynamic:/etc/traefik/dynamic:ro
     networks:
       - proxy
     deploy:

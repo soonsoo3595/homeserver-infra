@@ -10,11 +10,8 @@ services:
     networks:
       - proxy
       - backend
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.blog-web.rule=Host(`devbap.co.kr`)"
-      - "traefik.http.routers.blog-web.entrypoints=web"
-      - "traefik.http.services.blog-web.loadbalancer.server.port=3000"
+    # Traefik 라우팅은 라벨이 아니라 deploy/traefik/dynamic/blog-web.yml
+    # (파일 기반 provider)에 정의되어 있음 - 이유는 deploy/traefik/docker-compose.yml 주석 참고.
     healthcheck:
       test: ["CMD-SHELL", "wget --quiet --spider http://127.0.0.1:3000/ || exit 1"]
       interval: 10s

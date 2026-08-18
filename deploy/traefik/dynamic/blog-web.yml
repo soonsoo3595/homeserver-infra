@@ -1,0 +1,13 @@
+http:
+  routers:
+    blog-web:
+      rule: "Host(`devbap.co.kr`)"
+      entryPoints:
+        - web
+      service: blog-web
+
+  services:
+    blog-web:
+      loadBalancer:
+        servers:
+          - url: "http://blog-web:3000"

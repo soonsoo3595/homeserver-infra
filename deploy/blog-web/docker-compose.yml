@@ -1,0 +1,33 @@
+name: blog-web
+
+services:
+  blog-web:
+    image: blog-web:latest
+    container_name: blog-web
+    restart: unless-stopped
+    env_file:
+      - ../../secret/blog-web/.env
+    networks:
+      - proxy
+      - backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.blog-web.rule=Host(`devbap.co.kr`)"
+      - "traefik.http.routers.blog-web.entrypoints=web"
+      - "traefik.http.services.blog-web.loadbalancer.server.port=3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --spider http://127.0.0.1:3000/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768m
+
+networks:
+  proxy:
+    external: true
+  backend:
+    external: true

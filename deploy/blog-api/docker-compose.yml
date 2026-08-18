@@ -1,0 +1,25 @@
+name: blog-api
+
+services:
+  blog-api:
+    image: blog-api:latest
+    container_name: blog-api
+    restart: unless-stopped
+    env_file:
+      - ../../secret/blog-api/.env
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --spider http://127.0.0.1:8080/health/db || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512m
+
+networks:
+  backend:
+    external: true

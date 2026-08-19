@@ -21,7 +21,7 @@
 - [x] Jenkins 컨테이너 구성 및 초기 설정
 - [x] Meilisearch 컨테이너 구성 (블로그 검색용)
 - [x] 블로그 레포 생성 및 개발 시작 — 진행 상황은 [blog/CLAUDE.md](../blog/CLAUDE.md) 참고
-- [ ] Cloudflare Tunnel 외부 노출 설정 — **보류: 도메인 미보유, 구매 후 재개**
+- [x] 블로그 프로덕션 배포 (`blog-web`/`blog-api` Docker 이미지, Cloudflare Tunnel) — `https://devbap.co.kr` 라이브
 
 ## 개발 환경 메모
 
@@ -30,6 +30,7 @@
 - **(2026-08-06부터) 데스크탑 → 노트북 SSH는 키 인증으로 전환됨.** 데스크탑 `~/.ssh/homeserver`(ed25519, 패스프레이즈 없음)를 노트북 `~/.ssh/authorized_keys`에 등록해뒀고, 데스크탑 `~/.ssh/config`의 `Host homeserver` 항목 덕분에 `ssh homeserver`로 비밀번호 없이 바로 접속된다. Claude Code 세션에서도 TTY 없이 이 키로 직접 SSH 접속이 가능 — 컨테이너 상태 확인, 로그 조회, 1회성 명령 실행 등은 세션에서 직접 처리할 수 있다 (이전엔 비밀번호 인증만 되어 있어 세션에서 SSH 접속이 불가능했고, 사용자가 직접 서버 작업을 했었음 — 개발 속도를 위해 의도적으로 정책을 바꿈). 다만 시크릿 파일 생성·수정처럼 민감한 작업은 여전히 신중하게, 애매하면 먼저 물어볼 것.
 - 관리 화면(postgres, redis, Traefik 대시보드, Uptime Kuma, Jenkins 등)은 전부 `127.0.0.1`에만 바인딩하고, 데스크탑에서는 `ssh -L <포트>:localhost:<포트> <사용자명>@192.168.0.10` SSH 터널로만 접근한다. LAN에 직접 노출하지 않는다.
 - **WSL2 mirrored 네트워킹 모드 + UFW 주의사항**: mirrored 모드에서는 loopback(`127.0.0.1`) 트래픽이 일반적인 `lo` 인터페이스로 안 잡히는 것으로 보여, UFW의 기본 "loopback 허용"(`allow in on lo`) 규칙이 작동하지 않는 경우가 있었다. 이 경우 `sudo ufw allow <포트>/tcp`처럼 포트 자체를 허용해야 한다 — 어차피 Docker가 해당 포트를 `127.0.0.1`에만 바인딩하고 있어 LAN 노출 위험은 없다.
+- **Traefik의 Docker provider(라벨 기반 자동 라우팅)는 이 서버에서 못 쓴다**: 도커 데몬이 최소 API 1.40을 요구하는데 Traefik(v3.1/v3.5 둘 다 확인)의 Docker provider가 협상 없이 옛 기본값(1.24)으로 요청해서 `client version 1.24 is too old` 오류로 라벨 붙은 컨테이너를 전혀 못 찾는다. `DOCKER_API_VERSION` 환경 변수도 효과 없음(Traefik이 env를 안 읽는 것으로 보임). 그래서 `providers.file`(정적 설정 파일) 방식으로 전환했다 — 새 서비스를 Traefik에 붙일 땐 컨테이너에 라벨을 달지 말고 `deploy/traefik/dynamic/<서비스명>.yml`에 라우터/서비스를 직접 정의할 것. 부수 효과로 `docker.sock` 마운트도 필요 없어짐(더 안전).
 
 ## 서비스 로드맵
 
@@ -58,8 +59,8 @@
 
 - **컨테이너**: Docker, 서비스별 Compose 프로젝트·네트워크 분리
 - **CI/CD**: Jenkins — 로컬/VPN 내부에서만 접근, 외부 미노출
-- **리버스 프록시**: Traefik (Docker 라벨 기반 자동 라우팅)
-- **외부 노출**: Cloudflare Tunnel (포트포워딩·고정 IP 불필요)
+- **리버스 프록시**: Traefik — 파일 기반 정적 라우팅(`providers.file`, `deploy/traefik/dynamic/*.yml`) 사용. 원래 계획이던 Docker 라벨 자동 라우팅은 최신 Docker 엔진과의 API 버전 협상 버그로 못 씀 (아래 "알려진 이슈" 참고)
+- **외부 노출**: Cloudflare Tunnel (포트포워딩·고정 IP 불필요) — `devbap.co.kr`, 완료
 - **HTTPS**: Let's Encrypt(Certbot) 또는 Cloudflare 자동 처리
 - **모니터링**: Uptime Kuma
 - **로그**: Docker 로그 + logrotate, 필요 시 Loki

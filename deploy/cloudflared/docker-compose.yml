@@ -5,7 +5,10 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared
     restart: unless-stopped
-    command: tunnel run
+    # 기본 프로토콜(QUIC/UDP)이 이 서버의 Docker 네트워크에서 반복적으로
+    # "timeout: no recent network activity"로 끊겨서(홈서버 특유의
+    # MTU/PMTU 문제, HomeServer/CLAUDE.md 참고) TCP 기반 http2로 고정.
+    command: tunnel --protocol http2 run
     env_file:
       - ../../secret/cloudflared/.env
     networks:

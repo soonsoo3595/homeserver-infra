@@ -11,6 +11,12 @@ services:
     command: tunnel --protocol http2 run
     env_file:
       - ../../secret/cloudflared/.env
+    # cloudflared 이미지는 셸조차 없는 최소 이미지라 컨테이너 안에서 도는
+    # Docker HEALTHCHECK를 못 만든다. 대신 이 포트(cloudflared 자체 metrics
+    # 서버의 /ready)를 호스트로 열어서 healthcheck.sh가 cron으로 밖에서
+    # 찔러보고 죽어있으면 재시작시킨다 (자세한 배경은 healthcheck.sh 참고).
+    ports:
+      - "127.0.0.1:20241:20241"
     networks:
       - proxy
     deploy:

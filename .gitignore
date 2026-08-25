@@ -3,3 +3,4 @@ data/
 *.env
 .env
 Session Log/
+deploy/cloudflared/healthcheck.log
